@@ -20,6 +20,8 @@ die() {
   }
   cat > /dev/stdout <<EOF
 ${0} command [ options ] directory
+  mediacat will try to infer the type the media directory is using simple heuristics and then apply options to this directory.
+
   commands:
     watch                  watch a directory for new sub directories to classify
     scan                   scan a directory for existing sub directories to classify
@@ -29,10 +31,18 @@ ${0} command [ options ] directory
     -h | --help            show help
     -v | --verbose         verbose
     -d | --dry             dry run, don't write any changes when used in conjunction with --mv option
-    -t | --threshold <N>   the number of videos in a tree before it's considered a movie. default: ${SHOW_THRESHOLD}
+    -t | --threshold <N>   the number of videos in a tree before it's considered a show. default: ${SHOW_THRESHOLD}
     -m | --mv <dir>        move directory to media directory under <category> sub directory
     --chmod <mode>         chmod (recursively) the newly moved directory
     --chown <owner:group>  chown (recursively) the newly moved directory
+
+  example:
+    # Watch the \`downloads\` directory for new media directories. 
+    # Once one is categorized, its file mode bits are changed to 600
+    # Its ownership is changed to user 1000, group 1000
+    # And it is moved under the \`/media\` directory
+    mediacat watch -v --chown 1000:1000 --chmod 600 -mv /media /downloads
+
 EOF
   exit 0
 }
@@ -42,6 +52,10 @@ trace() {
     echo -e "\\033[93mtrace: \\033[97m$*\\033[39m"
   }
 }
+
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  die
+fi
 
 COMMAND="$1"
 COMMAND_RGX="watch|scan|single"
@@ -53,9 +67,6 @@ shift
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
-    -h|--help)
-      die
-      ;;
     -d|--dry)
       DRY=1
       ;;
